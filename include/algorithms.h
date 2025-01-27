@@ -12,12 +12,13 @@
 namespace alg {
     inline int K;
 
-    inline int T = 100000;
+    inline int T = 200000;
 
     inline double delta;
 
     inline double alpha = 0.5; // alpha
 
+    inline int sep = 1;
 
     inline void DuelUpdate(std::vector<std::vector<double>>& estimate, std::vector<std::vector<int>>& pull_counter, int arm1, int arm2, double& regret)  {
         if (arm1 == arm2) {
@@ -56,7 +57,11 @@ namespace alg {
             for (int j = 0; j < K; ++j) {
                 if (k != j) {
                     StatisticsUpdate(duel_estimate, duel_counter, reward_estimate, reward_counter, k, j, k,reward_regret, duel_regret);
-                    regrets[++time_slot] = {reward_regret, duel_regret};
+
+                    time_slot++;
+                    if (time_slot % sep == 0) {
+                        regrets[time_slot / sep] = {reward_regret, duel_regret};
+                    }
                 }
             }
         }
@@ -66,7 +71,9 @@ namespace alg {
 
     class DUEL;
 
-    class separation; // baseline
+    class RewardElim;
+
+    class DuelingElim;
 
     class elimination;
 

@@ -1,168 +1,98 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
-arm = 0
-rounds = 0
-iterations = 0
-seed = 0
-delta = 0.0
-alpha = 0.0
+from matplotlib.ticker import ScalarFormatter
 
 PATH = '../../fig/alpha/'
 
-curve_name = ["reward regret", "duel regret", "alg2 regret"]
-
-curve_num = 3
+rounds = 50
+curve_name = ["reward regret", "duel regret", "DecoFusion regret"]
+curve_num = len(curve_name)
+graph_names = ['DecoFusion']
+curve_combinations = [[0, 1, 2]]
 
 # 用于存储所有轮次的数据
 all_rounds_data = [[] for _ in range(curve_num)]
-x_mapped = None
+x_data = np.linspace(0, 1, 51)  # 生成 51 个点，alpha 从 0 到 1
 
+def draw_plt(all_rounds_data):
+    # 转换为 NumPy 数组，计算均值和标准差
+    all_rounds_data = np.array([np.array(curve) for curve in all_rounds_data])  # 转换为 NumPy 数组
+    mean_data = np.mean(all_rounds_data, axis=1)  # 每条曲线的均值
+    std_data = np.std(all_rounds_data, axis=1)   # 每条曲线的标准差
 
+    # 定义颜色、形状和线条样式的映射
+    color_map = ['green', 'red','blue']
+    marker_map = ['o', '^', 's']
+    linestyle_map = ['--', '-.', '-']
 
-graph_names = [
-    'alg2'
-]
-
-curve_combinations = [
-    [0, 1, 2]
-]
-
-def draw_plt(all_rounds_data, x_mapped, x_data):
-    # 计算均值和标准差
-    mean_data = []  # 每条曲线的均值
-    std_data = []   # 每条曲线的标准差
-
-    for arr in all_rounds_data:
-        curve_data = np.array(arr)
-        mean_data.append(np.mean(curve_data, axis=0))
-        std_data.append(np.std(curve_data, axis=0))
-
-    print(all_rounds_data)
-    print(std_data)
-
-    # 定义每条曲线的标记形状
-    markers = ['^', 's', 'D']  # 三角形、正方形、菱形
+    # 设置全局字体大小
+    plt.rcParams.update({'font.size': 20})
 
     # 遍历每张图的曲线组合
     for idx, curves in enumerate(curve_combinations):
-        # 绘制图像
-        plt.figure(figsize=(8.0, 6.0), dpi=200)
+        plt.figure(figsize=(8.0, 6.0), dpi=300)
 
-        for i, curve_idx in enumerate(curves):
-            # 绘制均值曲线，并指定不同的标记形状
+        for curve_idx in curves:
             plt.plot(
-                x_mapped, 
-                mean_data[curve_idx], 
-                label=curve_name[curve_idx], 
-                marker=markers[i % len(markers)],  # 使用不同的标记形状
-                markersize=8,                      # 标记大小
-                markerfacecolor='none',            # 空心填充
-                markeredgecolor=plt.cm.tab10(i),   # 边框颜色
-                linestyle='-',                     # 线条样式
-                color=plt.cm.tab10(i)              # 线条颜色
+                x_data,
+                mean_data[curve_idx],
+                label=curve_name[curve_idx],
+                linewidth=2,
+                marker=marker_map[curve_idx],
+                markersize=8,
+                markerfacecolor='none',
+                markeredgecolor=color_map[curve_idx],
+                linestyle=linestyle_map[curve_idx],
+                color=color_map[curve_idx],
+                markevery=5
             )
-            # 绘制标准差阴影区域（仅当 std > 0 时绘制）
-            if np.any(std_data[curve_idx] > 0):  # 检查标准差是否大于 0
+            # 绘制标准差阴影区域
+            if np.any(std_data[curve_idx] > 0):  # 确保 std > 0
                 plt.fill_between(
-                    x_mapped, 
-                    mean_data[curve_idx] - std_data[curve_idx], 
-                    mean_data[curve_idx] + std_data[curve_idx], 
-                    alpha=0.2,  # 阴影透明度
-                    color=plt.cm.tab10(i)  # 阴影颜色
+                    x_data,
+                    mean_data[curve_idx] - std_data[curve_idx],
+                    mean_data[curve_idx] + std_data[curve_idx],
+                    alpha=0.1,
+                    color=color_map[curve_idx]
                 )
 
-        plt.legend()
-        plt.xticks(x_mapped[::5], x_data[::5], rotation=45, fontsize=10)  # 旋转刻度标签，避免重叠
-        plt.xlabel('alpha')
-        plt.ylabel('regret')
-        plt.title(f'rounds: {rounds}, arms: {arm}, iterations: {iterations}, seed: {seed}, delta: {delta}')
-        
-        # 调整布局，确保刻度标签不被裁剪
+        # 设置 x 轴的刻度，只显示 0, 0.2, 0.4, 0.6, 0.8, 1.0
+        plt.xticks(np.linspace(0, 1, 6), fontsize=18)  # 生成 6 个点刻度，0, 0.2, ..., 1.0
+        # 设置 y 轴科学计数法
+        ax = plt.gca()
+        ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+        ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+        ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+
+        # 设置坐标轴和图例
+        plt.xlabel('\\alpha', fontsize=20, fontweight='bold')
+        plt.ylabel('regret', fontsize=20, fontweight='bold')
+        plt.legend(fontsize=18)
+
+        # 调整布局并保存图像
         plt.tight_layout()
-        
-        # 保存图像
-        if not os.path.exists(PATH + str(seed)):
-            os.makedirs(PATH + str(seed))
-        curr_path = PATH + str(seed) + '/'
-            
-        plt.savefig(curr_path + graph_names[idx] + f'_{rounds}_{arm}_{iterations}_{seed}_{delta}_{alpha}.png')
-        plt.close()  # 关闭图像，释放内存
-    
-flag = False
-    
-x_data = []
-with open('../out/alpha.txt') as f:
+        if not os.path.exists(PATH):
+            os.makedirs(PATH)
+        plt.savefig(os.path.join(PATH, f"{graph_names[idx]}.png"))
+        plt.close()
+
+
+# 数据读取并处理
+with open('../out.nosync/alpha.txt') as f:
+    round_count = 0
     while True:
-        data = []
         line = f.readline()
         if not line:
             break
-        
-        if line.startswith('>'):
-            
-            if flag:
-                draw_plt(all_rounds_data, x_mapped, x_data)
-                all_rounds_data = [[] for _ in range(curve_num)]
-                x_mapped = None
-            
-            flag = True
-            line = f.readline()
-            if line[-1] == '\n':
-                line = line[:-1]
-            words = line.strip().split()
-            for i in range(len(words)):
-                if words[i] == 'rounds':
-                    rounds = int(words[i-1])
-                elif words[i] == 'arms':
-                    arm = int(words[i-1])
-                elif words[i] == 'iterations':
-                    iterations = int(words[i-1])
-                    
-
-            line = f.readline()
-            if line[-1] == '\n':
-                line = line[:-1]
-            words = line.strip().split()
-            for i in range(len(words)):
-                if words[i] == 'seed:':
-                    seed = int(words[i+1])
-            line = f.readline()
-            if line[-1] == '\n':
-                line = line[:-1]
-            words = line.strip().split()
-            for i in range(len(words)):
-                if words[i] == 'delta:':
-                    delta = float(words[i+1])
-            line = f.readline()
-            if line[-1] == '\n':
-                line = line[:-1]
-            words = line.strip().split()
-            for i in range(len(words)):
-                if words[i] == 'alpha:':
-                    alpha = float(words[i+1])
-        
         elif line.startswith('alpha'):
-            line = f.readline()
-            x_data = []
-            while line[0].isdigit():
-                if line[-1] == '\n':
-                    line = line[:-1]
-                words = line.strip().split()
-                x_data.append(float(words[0]))
-                data.append([float(x) for x in words[1:]])
-                line = f.readline()
-                if not line:
-                    break
-        
-            # 将 x_data 投影到 [0, iterations] 区间
-            x_mapped = [x / max(x_data) * iterations for x in x_data]
-
-            # 将当前轮次的数据存储到 all_rounds_data 中
+            round_count += 1
+            print(f"Processing round: {round_count}")
+            
+            data = np.array([list(map(float, f.readline().strip().split()[1:])) for _ in range(rounds+1)])
+            
             for i in range(curve_num):
-                current_curve_data = []
-                for j in range(len(data)):
-                    current_curve_data.append(data[j][i])
-                all_rounds_data[i].append(current_curve_data)
-draw_plt(all_rounds_data, x_mapped, x_data)
+                all_rounds_data[i].append(data[:, i])
+
+# 绘制最终图像
+draw_plt(all_rounds_data)

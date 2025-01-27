@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <vector>
-#include <unordered_set>
 
 namespace opr {
 
@@ -62,7 +61,7 @@ double opr::f1(const double x) {
 }
 
 double opr::square(const double x) {
-    return 0;
+    return 0.05 * pow(x, 1.01);
 }
 
 

@@ -5,6 +5,8 @@
 #ifndef DECOMPOSITION_H
 #define DECOMPOSITION_H
 
+#include <iostream>
+
 #include "algorithms.h"
 #include <unordered_set>
 #include <vector>
@@ -56,7 +58,7 @@ private:
     void DecisionMaking() {
         const int explore_arm = candidates.back(); // fixed order -> The last one
         candidates.pop_back(); // remove it
-        if (static_cast<double>(rand() % RAND_MAX) / RAND_MAX > pow(alpha, 2) / (pow(alpha, 2) + pow(1-alpha, 2)) ) {
+        if (rand() % RAND_MAX > RAND_MAX * pow(alpha, 2) / (pow(alpha, 2) + pow(1-alpha, 2)) ) {
             // reward explore, duel exploit
             to_pull = explore_arm;
             to_duel1 = to_duel2 = best_reward_arm;
@@ -89,7 +91,7 @@ private:
     }
 
 
-    void SetUpdate() {
+    void DecompositionArmSetUpdate() {
         duel_indistinguishable.clear();
         reward_indistinguishable.clear();
         const double bound_t = opr::DistinguishBound(time_slot, K, opr::square);
@@ -101,29 +103,28 @@ private:
         best_duel_arm = *std::min_element(reward_indistinguishable.begin(), reward_indistinguishable.end(), [&](const auto k1, const auto k2) {
             return information_duel[k1] < information_duel[k2];
         });
-        // const double IkDt = IDkt(best_duel_arm);
+        const double info_best_duel_arm = information_duel[best_duel_arm];
         for (int k = 0; k < K; ++k) {
-            if (information_duel[k] - information_duel[best_duel_arm] <= bound_t) {
+            if (information_duel[k] - info_best_duel_arm <= bound_t) {
                 duel_indistinguishable.push_back(k);
             }
         }
-        double max_reward_estimate = 0;
-        for (const auto k : duel_indistinguishable) {
-            if (reward_estimate[k] > max_reward_estimate) {
-                max_reward_estimate = reward_estimate[k];
-                best_reward_arm = k;
-            }
-        }
+
+        best_reward_arm = *std::max_element(duel_indistinguishable.begin(), duel_indistinguishable.end(), [&](const auto k1, const auto k2) {
+            return reward_estimate[k1] < reward_estimate[k2];
+        });
     }
 
     void InformationUpdate() {
-        const double max_reward_estimate = *std::max_element(reward_estimate.begin(), reward_estimate.end());
+        const double max_reward_estimate = reward_estimate[*std::max_element(duel_indistinguishable.begin(), duel_indistinguishable.end(), [&](const auto k1, const auto k2) {
+            return reward_estimate[k1] < reward_estimate[k2];
+        })];
         for (int k = 0; k < K; ++k) {
             information_reward[k] = reward_counter[k] * opr::KLDiv(reward_estimate[k], max_reward_estimate);
         }
         for (int k = 0; k < K; ++k) {
             information_duel[k] = 0;
-            for (const auto l : duel_indistinguishable) {
+            for (const auto l : reward_indistinguishable) {
                 if (duel_estimate[k][l] < 0.5) {
                     information_duel[k] += duel_counter[k][l] * opr::KLDiv(duel_estimate[k][l], 0.5);
                 }
@@ -136,8 +137,7 @@ public:
 
     double duel_regret;
 
-    decomposition() :
-    best_reward_arm(-1), best_duel_arm(-1), to_pull(0), to_duel1(0), to_duel2(0), time_slot(0), reward_regret(0.0), duel_regret(0.0) {
+    decomposition() : best_reward_arm(-1), best_duel_arm(-1), to_pull(0), to_duel1(0), to_duel2(0), time_slot(0), reward_regret(0.0), duel_regret(0.0) {
         duel_estimate.resize(K, std::vector<double>(K, 0));
         duel_counter.resize(K, std::vector(K, 0));
         reward_counter.resize(K, 0);
@@ -155,7 +155,7 @@ public:
     void Run(opr::regrets* &regrets) {
         WarmUpPhase(duel_estimate, duel_counter, reward_estimate, reward_counter, reward_regret, duel_regret, regrets, time_slot);
         while (time_slot++ < T) {
-            SetUpdate();
+            DecompositionArmSetUpdate();
             DecisionMaking();
             // Exploration Arm Set Construction
             FindNewArmToExplore();
@@ -165,8 +165,9 @@ public:
             }
             StatisticsUpdate(duel_estimate, duel_counter, reward_estimate, reward_counter, to_duel1, to_duel2, to_pull, reward_regret, duel_regret);
             InformationUpdate();
-            regrets[time_slot] = { reward_regret, duel_regret };
-            // RegretUpdate(reward_regret, duel_regret, *regrets++);
+            if (time_slot % sep == 0) {
+                regrets[time_slot / sep] = { reward_regret, duel_regret };
+            }
         }
     }
 
@@ -174,7 +175,7 @@ public:
         auto *regrets = new opr::regrets[K * K]; // Unuseful var, just used as a param transferred to WarmUpPhase.
         WarmUpPhase(duel_estimate, duel_counter, reward_estimate, reward_counter, reward_regret, duel_regret, regrets, time_slot);
         while (time_slot++ < T) {
-            SetUpdate();
+            DecompositionArmSetUpdate();
             DecisionMaking();
             // Exploration Arm Set Construction
             FindNewArmToExplore();

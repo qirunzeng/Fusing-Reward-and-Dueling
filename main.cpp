@@ -3,41 +3,41 @@
 //
 
 
-#include "algorithms.h"
+// #include "algorithms.h"
 #include "decomposition.h"
 #include "elimination.h"
 // #include "DUEL.h"
 // #include "UCB.h"
 #include "environment.h"
 #include "operations.h"
-#include "separation.h"
+#include "RewardElim.h"
+#include "DuelingElim.h"
 #include <iostream>
 #include <vector>
 
 
 #define ROUND 100
-const std::string path = "../out/raw.txt";
+const std::string path = "../out.nosync/raw.txt";
 
-#define REGRET_DATA 9
+#define REGRET_DATA 8
 
-void output_data(std::ofstream& outfile, const opr::regrets *alg1_regrets, const opr::regrets *alg2_regrets, const opr::regrets *baseline_r) {
+void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::regrets *alg2_regrets1, const opr::regrets *alg2_regrets2, const opr::regrets *alg2_r, const opr::regrets *reward_elim_r, const opr::regrets *dueling_elim_r) {
     outfile << "---> results:" << std::endl;
-    outfile << "# T            # UCB    regret    # DUEL   regret # baseline r # reward regret(1) # duel regret(1)   # regret(1)        # reward regret(2) # duel regret(2)   # regret(2)" << std::endl;
+    outfile << "# T            # Elim by reward # Elim by duel # NoFusion1 # regret 1 # alg2 by alpha=0 # alg2 by alpha=1 # NoFusion2 # regret 2" << std::endl;
     for (int i = 0; i <= REGRET_DATA; i++) {
         outfile << 0 << " ";
     }
     outfile << std::endl;
-    for (int i = 1; i <= alg::T; ++i) {
-        outfile << std::left << std::setw(14) << i << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (baseline_r[i].reward_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (baseline_r[i].duel_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg::alpha * baseline_r[i].reward_r + (1 - alg::alpha) * baseline_r[i].duel_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg1_regrets[i].reward_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg1_regrets[i].duel_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg::alpha*alg1_regrets[i].reward_r + (1-alg::alpha)*alg1_regrets[i].duel_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg2_regrets[i].reward_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg2_regrets[i].duel_r) << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(18) << (alg::alpha*alg2_regrets[i].reward_r + (1-alg::alpha)*alg2_regrets[i].duel_r) << std::endl;
+    for (int i = 1; i <= alg::T / alg::sep; ++i) {
+        outfile << std::left << std::setw(14) << i * alg::sep << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + reward_elim_r[i].duel_r * 0.5 << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << dueling_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " "; // NoFusion1
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg::alpha*alg1_r[i].reward_r + (1-alg::alpha)*alg1_r[i].duel_r << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets1[i].reward_r * 0.5 + alg2_regrets1[i].duel_r * 0.5 << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets2[i].reward_r * 0.5 + alg2_regrets2[i].duel_r * 0.5 << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets1[i].reward_r * 0.5 + alg2_regrets2[i].duel_r * 0.5 << " ";
+        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_r[i].reward_r*alg::alpha + alg2_r[i].duel_r*(1-alg::alpha) << std::endl;
     }
 }
 
@@ -49,7 +49,6 @@ void output(std::ofstream& outfile) {
     outfile << "---> alpha: " << alg::alpha << std::endl;
     outfile << "---> expectations:" << std::endl;
     for (const auto &exp : env::expectations) {
-        // outfile << exp << " ";
         outfile << std::fixed << std::setprecision(2) << std::left << std::setw(4) << exp << " ";
     }
     outfile << std::endl;
@@ -68,37 +67,44 @@ int main() {
     env::seed = static_cast<unsigned>(time(nullptr));
     srand(env::seed);
 
-    alg::delta = 1.0 / static_cast<double>(1LL * alg::K * alg::K * alg::T * alg::T);
+    # if 0 // 根据 T 变化
 
-    // auto *UCB_regrets = new double[alg::T+1], *DUEL_regrets = new double[alg::T+1];
-    auto * baseline_r = new opr::regrets[alg::T+1], *alg1_regrets = new opr::regrets[alg::T+1], *alg2_regrets = new opr::regrets[alg::T+1];
-
-    # if 1 // 根据 T 变化
-    std::ofstream outfile(path, std::ios::app);
+    alg::delta = 1.0 / static_cast<double>(1LL * alg::T * alg::T);
+    auto * reward_elim_regrets = new opr::regrets[alg::T/alg::sep+1], * dueling_elim_regrets = new opr::regrets[alg::T/alg::sep+1], *alg1_regrets = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets1 = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets2 = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets3 = new opr::regrets[alg::T/alg::sep+1];
+    std::ofstream outfile(path);
 
     output(outfile);
 
     for (int i = 0; i < ROUND; ++i) {
         std::cout << "=====> run = " << i+1 << std::endl;
-        // alg::UCB ucb;
-        // ucb.Run(UCB_regrets);
-        // alg::DUEL duel;
-        // duel.Run(DUEL_regrets);
-        alg::separation baseline;
-        baseline.Run(baseline_r);
+        alg::RewardElim RewardElim;
+        RewardElim.Run(reward_elim_regrets);
+
+        alg::DuelingElim DuelingElim;
+        DuelingElim.Run(dueling_elim_regrets);
+
         alg::elimination algo1;
         algo1.Run(alg1_regrets);
-        alg::decomposition algo2;
-        algo2.Run(alg2_regrets);
-        output_data(outfile, alg1_regrets, alg2_regrets, baseline_r);
+
+        alg::alpha = 0;
+        alg::decomposition algo2_1;
+        algo2_1.Run(alg2_regrets1);
+        alg::alpha = 1;
+        alg::decomposition algo2_2; // always duel explore
+        algo2_2.Run(alg2_regrets2);
+        alg::alpha = 0.5;
+        alg::decomposition algo2_3;
+        algo2_3.Run(alg2_regrets3);
+
+        output_data(outfile, alg1_regrets, alg2_regrets1, alg2_regrets2, alg2_regrets3, reward_elim_regrets, dueling_elim_regrets);
     }
     outfile.close();
     std::cout << "Data written to file: " << path << std::endl;
     #endif
 
-    #if 0 // 根据 alpha 变化
-    const std::string path_alpha = "../out/alpha.txt";
-    std::ofstream outfile_alpha(path_alpha, std::ios::app);
+    #if 1 // 根据 alpha 变化
+    const std::string path_alpha = "../out.nosync/alpha.txt";
+    std::ofstream outfile_alpha(path_alpha);
 
     outfile_alpha << ">>=====================================================================================================================<<" << std::endl;
     outfile_alpha << "Average result over " << ROUND << " rounds of " << alg::K << " arms over " << alg::T << " iterations per round." << std::endl;
