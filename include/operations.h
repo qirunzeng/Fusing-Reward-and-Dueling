@@ -27,7 +27,7 @@ namespace opr {
 }
 
 double opr::ConfidenceRadius(const int K, const int t, const double delta, const int count) {
-    return sqrt(2 * log(K * t / delta)) / count;
+    return sqrt(2 * log(K * t / delta) / count);
 }
 
 double opr::KLDiv(const double p, const double q) {

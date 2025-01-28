@@ -18,8 +18,6 @@ namespace alg {
 
     inline double alpha = 0.5; // alpha
 
-    inline int sep = 1;
-
     inline void DuelUpdate(std::vector<std::vector<double>>& estimate, std::vector<std::vector<int>>& pull_counter, int arm1, int arm2, double& regret)  {
         if (arm1 == arm2) {
             estimate[arm1][arm2] = (estimate[arm1][arm2] * pull_counter[arm1][arm2] + 1) / (pull_counter[arm1][arm2] + 2);
@@ -53,14 +51,13 @@ namespace alg {
     }
 
     inline void WarmUpPhase(std::vector<std::vector<double>>& duel_estimate, std::vector<std::vector<int>>& duel_counter, std::vector<double>&reward_estimate, std::vector<int>& reward_counter, double& reward_regret, double& duel_regret, opr::regrets* & regrets, int& time_slot)  {
-        for (int k = 0; k < K; ++k) {
-            for (int j = 0; j < K; ++j) {
-                if (k != j) {
-                    StatisticsUpdate(duel_estimate, duel_counter, reward_estimate, reward_counter, k, j, k,reward_regret, duel_regret);
+        for (int _ = 0; _ < 5; ++_) {
+            for (int k = 0; k < K; ++k) {
+                for (int j = 0; j < K; ++j) {
+                    if (k != j) {
+                        StatisticsUpdate(duel_estimate, duel_counter, reward_estimate, reward_counter, k, j, k,reward_regret, duel_regret);
 
-                    time_slot++;
-                    if (time_slot % sep == 0) {
-                        regrets[time_slot / sep] = {reward_regret, duel_regret};
+                        regrets[++time_slot] = {reward_regret, duel_regret};
                     }
                 }
             }

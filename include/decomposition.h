@@ -165,9 +165,7 @@ public:
             }
             StatisticsUpdate(duel_estimate, duel_counter, reward_estimate, reward_counter, to_duel1, to_duel2, to_pull, reward_regret, duel_regret);
             InformationUpdate();
-            if (time_slot % sep == 0) {
-                regrets[time_slot / sep] = { reward_regret, duel_regret };
-            }
+            regrets[time_slot] = { reward_regret, duel_regret };
         }
     }
 

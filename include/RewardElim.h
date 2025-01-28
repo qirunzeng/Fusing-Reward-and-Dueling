@@ -20,16 +20,15 @@ private:
 
 
     void WarmUp(opr::regrets *&regrets) {
-        for (int k = 0; k < K; ++k) {
-            for (int j = 0; j < K; ++j) {
-                if (k != j) {
-                    // StatisticsUpdate(duel_estimate, duel_counter, estimate, counter, k, j, k,reward_regret, duel_regret);
-                    RewardUpdate(estimate, counter, k, reward_regret);
-                    const int c1 = candidates[rand() % candidates.size()], c2 = candidates[rand() % candidates.size()];
-                    duel_regret += (env::preference_matrix[0][c1] + env::preference_matrix[0][c2] - 1) / 2;
-                    time_slot++;
-                    if (time_slot % sep == 0) {
-                        regrets[time_slot / sep] = {reward_regret, duel_regret};
+        for (int _ = 0; _ < 5; ++_) {
+            for (int k = 0; k < K; ++k) {
+                for (int j = 0; j < K; ++j) {
+                    if (k != j) {
+                        // StatisticsUpdate(duel_estimate, duel_counter, estimate, counter, k, j, k,reward_regret, duel_regret);
+                        RewardUpdate(estimate, counter, k, reward_regret);
+                        const int c1 = candidates[rand() % candidates.size()], c2 = candidates[rand() % candidates.size()];
+                        duel_regret += (env::preference_matrix[0][c1] + env::preference_matrix[0][c2] - 1) / 2;
+                        regrets[++time_slot] = {reward_regret, duel_regret};
                     }
                 }
             }
@@ -78,9 +77,7 @@ public:
         WarmUp(regrets);
         while (time_slot++ < T) {
             DecisionMaking();
-            if (time_slot % sep == 0) {
-                regrets[time_slot / sep] = {reward_regret, duel_regret};
-            }
+            regrets[time_slot] = {reward_regret, duel_regret};
         }
         std::cout << "Reward Elimination: ";
         for (const int k : candidates) {

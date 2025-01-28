@@ -21,9 +21,18 @@ curve_num = len(curve_name)
 graph_names = ["Reward", "Dueling", "NO_FUSION"]
 curve_combinations = [[0, 4, 3, 7], [1, 5, 3, 7], [2, 6, 3, 7]]
 
+ylabel = [
+    "Reward-based regret " + r"$R_T$",  # Reward
+    "Dueling-based regret " + r"$R_T$",  # Dueling
+    "Aggregated regret " + r"$R_T$"  # Dueling
+]
+
+# heights = [
+#     2300, 2500, 2200
+# ]
+
 # 用于存储所有轮次的数据
 all_rounds_data = [[] for _ in range(curve_num)]
-
 
 def draw_plt(all_rounds_data):
     # 转换为 NumPy 数组，计算均值和标准差
@@ -80,7 +89,7 @@ def draw_plt(all_rounds_data):
         plt.xticks(fontsize=18, rotation=45)
         plt.yticks(fontsize=18)
         plt.xlabel("Rounds " + r"$t$", fontsize=20, fontweight="bold")
-        plt.ylabel("Aggregated regret" + r"$R_T$", fontsize=20, fontweight="bold")
+        plt.ylabel(ylabel[idx], fontsize=20, fontweight="bold")
         ## Please label the y-axis with the corresponding names
         # plt.ylabel(
         #     "Reward-based regret " + r"$R_T^{(\text{R})}$",
@@ -93,7 +102,7 @@ def draw_plt(all_rounds_data):
         #     fontweight="bold",
         # )
         plt.legend(fontsize=18)
-        plt.ylim(bottom=0, top=2500)
+        plt.ylim(bottom=0, top=2000)
 
         # 调整布局并保存图像
         plt.tight_layout()

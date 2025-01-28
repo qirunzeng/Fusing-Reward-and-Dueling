@@ -83,9 +83,7 @@ public:
         WarmUpPhase(duel_estimate, duel_counter, reward_estimate, reward_counter, reward_regret, duel_regret, regrets, time_slot);
         while (time_slot++ < T) {
             DecisionMaking();
-            if (time_slot % sep == 0) {
-                regrets[time_slot / sep] = {reward_regret, duel_regret};
-            }
+            regrets[time_slot] = {reward_regret, duel_regret};
         }
         std::cout << "Elimination Fusion: ";
         for (const int k : candidates) {

@@ -28,8 +28,8 @@ void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::
         outfile << 0 << " ";
     }
     outfile << std::endl;
-    for (int i = 1; i <= alg::T / alg::sep; ++i) {
-        outfile << std::left << std::setw(14) << i * alg::sep << " ";
+    for (int i = 1; i <= alg::T; ++i) {
+        outfile << std::left << std::setw(14) << i << " ";
         outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + reward_elim_r[i].duel_r * 0.5 << " ";
         outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << dueling_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " ";
         outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " "; // NoFusion1
@@ -67,10 +67,10 @@ int main() {
     env::seed = static_cast<unsigned>(time(nullptr));
     srand(env::seed);
 
-    # if 0 // 根据 T 变化
+    # if 1 // 根据 T 变化
 
-    alg::delta = 1.0 / static_cast<double>(1LL * alg::T * alg::T);
-    auto * reward_elim_regrets = new opr::regrets[alg::T/alg::sep+1], * dueling_elim_regrets = new opr::regrets[alg::T/alg::sep+1], *alg1_regrets = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets1 = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets2 = new opr::regrets[alg::T/alg::sep+1], *alg2_regrets3 = new opr::regrets[alg::T/alg::sep+1];
+    alg::delta = 1.0 / static_cast<double>(1LL * alg::T);
+    auto * reward_elim_regrets = new opr::regrets[alg::T+1], * dueling_elim_regrets = new opr::regrets[alg::T+1], *alg1_regrets = new opr::regrets[alg::T+1], *alg2_regrets1 = new opr::regrets[alg::T+1], *alg2_regrets2 = new opr::regrets[alg::T+1], *alg2_regrets3 = new opr::regrets[alg::T+1];
     std::ofstream outfile(path);
 
     output(outfile);
@@ -102,7 +102,7 @@ int main() {
     std::cout << "Data written to file: " << path << std::endl;
     #endif
 
-    #if 1 // 根据 alpha 变化
+    #if 0 // 根据 alpha 变化
     const std::string path_alpha = "../out.nosync/alpha.txt";
     std::ofstream outfile_alpha(path_alpha);
 
