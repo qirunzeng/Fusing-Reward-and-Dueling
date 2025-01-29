@@ -51,7 +51,7 @@ namespace alg {
     }
 
     inline void WarmUpPhase(std::vector<std::vector<double>>& duel_estimate, std::vector<std::vector<int>>& duel_counter, std::vector<double>&reward_estimate, std::vector<int>& reward_counter, double& reward_regret, double& duel_regret, opr::regrets* & regrets, int& time_slot)  {
-        for (int _ = 0; _ < 5; ++_) {
+        // for (int _ = 0; _ < 5; ++_) {
             for (int k = 0; k < K; ++k) {
                 for (int j = 0; j < K; ++j) {
                     if (k != j) {
@@ -61,7 +61,7 @@ namespace alg {
                     }
                 }
             }
-        }
+        // }
     }
 
     class UCB;

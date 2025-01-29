@@ -20,7 +20,7 @@ private:
 
 
     void WarmUp(opr::regrets *&regrets) {
-        for (int _ = 0; _ < 5; ++_) {
+        // for (int _ = 0; _ < 5; ++_) {
             for (int k = 0; k < K; ++k) {
                 for (int j = 0; j < K; ++j) {
                     if (k != j) {
@@ -32,7 +32,7 @@ private:
                     }
                 }
             }
-        }
+        // }
     }
 
     void DecisionMaking()  {

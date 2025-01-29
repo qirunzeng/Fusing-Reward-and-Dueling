@@ -19,25 +19,31 @@
 #define ROUND 100
 const std::string path = "../out.nosync/raw.txt";
 
-#define REGRET_DATA 8
+#define REGRET_DATA 14
 
-void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::regrets *alg2_regrets1, const opr::regrets *alg2_regrets2, const opr::regrets *alg2_r, const opr::regrets *reward_elim_r, const opr::regrets *dueling_elim_r) {
+void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::regrets *alg2_regrets1, const opr::regrets *alg2_regrets2, const opr::regrets *alg2_r, const opr::regrets *reward_elim_r, const opr::regrets *dueling_elim_r, const opr::regrets *alg2_r01, const opr::regrets *alg2_r09) {
     outfile << "---> results:" << std::endl;
-    outfile << "# T            # Elim by reward # Elim by duel # NoFusion1 # regret 1 # alg2 by alpha=0 # alg2 by alpha=1 # NoFusion2 # regret 2" << std::endl;
+    outfile << "# T            # ..." << std::endl;
     for (int i = 0; i <= REGRET_DATA; i++) {
         outfile << 0 << " ";
     }
     outfile << std::endl;
     for (int i = 1; i <= alg::T; ++i) {
         outfile << std::left << std::setw(14) << i << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + reward_elim_r[i].duel_r * 0.5 << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << dueling_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << reward_elim_r[i].reward_r * 0.5 + dueling_elim_r[i].duel_r * 0.5 << " "; // NoFusion1
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg::alpha*alg1_r[i].reward_r + (1-alg::alpha)*alg1_r[i].duel_r << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets1[i].reward_r * 0.5 + alg2_regrets1[i].duel_r * 0.5 << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets2[i].reward_r * 0.5 + alg2_regrets2[i].duel_r * 0.5 << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_regrets1[i].reward_r * 0.5 + alg2_regrets2[i].duel_r * 0.5 << " ";
-        outfile << std::fixed << std::setprecision(3) << std::left << std::setw(12) << alg2_r[i].reward_r*alg::alpha + alg2_r[i].duel_r*(1-alg::alpha) << std::endl;
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<reward_elim_r[i].reward_r << " "; // Elim No Fusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<dueling_elim_r[i].duel_r  << " "; // Elim No Fusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<reward_elim_r[i].reward_r*0.5 + reward_elim_r[i].duel_r*0.5 <<" ";//ElimFusion-Reward
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<dueling_elim_r[i].reward_r*0.5+dueling_elim_r[i].duel_r*0.5 <<" ";//ElimFusion-Dueling
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<reward_elim_r[i].reward_r*0.5 +dueling_elim_r[i].duel_r*0.5 <<" ";//ElimNoFusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg1_r[i].reward_r * 0.5 + alg1_r[i].duel_r * 0.5 << " ";         //ElimFusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_regrets1[i].reward_r << " "; // MEDNoFusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_regrets2[i].duel_r   << " "; // MEDNoFusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_regrets1[i].reward_r*0.5 + alg2_regrets1[i].duel_r*0.5 << " "; // DMED (Reward)
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_regrets2[i].reward_r*0.5 + alg2_regrets2[i].duel_r*0.5 << " "; // RMED (Dueling)
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_regrets1[i].reward_r*0.5 + alg2_regrets2[i].duel_r*0.5 << " "; // MEDNoFusion
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_r[i].reward_r*0.5 + alg2_r[i].duel_r*0.5 << " ";   // DecoFusion, 0.5
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_r01[i].reward_r*0.1 + alg2_r[i].duel_r*0.9 << " "; // DecoFusion, 0.9
+        outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<alg2_r09[i].reward_r*0.9 + alg2_r[i].duel_r*0.1 << std::endl; // DecoFusion, 0.1
     }
 }
 
@@ -70,7 +76,7 @@ int main() {
     # if 1 // 根据 T 变化
 
     alg::delta = 1.0 / static_cast<double>(1LL * alg::T);
-    auto * reward_elim_regrets = new opr::regrets[alg::T+1], * dueling_elim_regrets = new opr::regrets[alg::T+1], *alg1_regrets = new opr::regrets[alg::T+1], *alg2_regrets1 = new opr::regrets[alg::T+1], *alg2_regrets2 = new opr::regrets[alg::T+1], *alg2_regrets3 = new opr::regrets[alg::T+1];
+    auto * reward_elim_regrets = new opr::regrets[alg::T+1], * dueling_elim_regrets = new opr::regrets[alg::T+1], *alg1_regrets = new opr::regrets[alg::T+1], *alg2_regrets1 = new opr::regrets[alg::T+1], *alg2_regrets2 = new opr::regrets[alg::T+1], *alg2_regrets3 = new opr::regrets[alg::T+1], *alg2_regrets0_1 = new opr::regrets[alg::T+1], *alg2_regrets0_9 = new opr::regrets[alg::T+1];
     std::ofstream outfile(path);
 
     output(outfile);
@@ -96,7 +102,16 @@ int main() {
         alg::decomposition algo2_3;
         algo2_3.Run(alg2_regrets3);
 
-        output_data(outfile, alg1_regrets, alg2_regrets1, alg2_regrets2, alg2_regrets3, reward_elim_regrets, dueling_elim_regrets);
+        alg::alpha = 0.1;
+        alg::decomposition algo2_0_1;
+        algo2_0_1.Run(alg2_regrets0_1);
+
+        alg::alpha = 0.9;
+        alg::decomposition algo2_0_9;
+        algo2_0_9.Run(alg2_regrets0_9);
+        alg::alpha = 0.5;
+
+        output_data(outfile, alg1_regrets, alg2_regrets1, alg2_regrets2, alg2_regrets3, reward_elim_regrets, dueling_elim_regrets, alg2_regrets0_1, alg2_regrets0_9);
     }
     outfile.close();
     std::cout << "Data written to file: " << path << std::endl;
