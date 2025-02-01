@@ -4,53 +4,27 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
 # 配置参数
-iterations = 200000
-x_data = np.arange(iterations + 1)
-PATH = "../../fig/regret/"
+iterations = 5
+x_data = np.array([x*0.02 + 0.03 for x in range(iterations)])
+PATH = "../../fig/gap-mat/"
 curve_name = [
-    "ElimNoFusion",     # 0
-    "ElimNoFusion",     # 1
-
-    "Elim (Reward)",    # 2
-    "Elim (Dueling)",   # 3
-    
-    "ElimNoFusion",     # 4
-    "ElimFusion",       # 5
-    
-    "MEDNoFusion",      # 6
-    "MEDNoFusion",      # 7
-    
-    "DMED (Reward)",    # 8
-    "RMED (Dueling)",   # 9
-    
-    "MEDNoFusion",      # 10 
-    "DecoFusion",      # 11 
+    "ElimNoFusion",
+    "ElimFusion",
+    "MEDNoFusion",
+    "DecoFusion"
 ]
 
 curve_num = len(curve_name)
 
 graph_names = [
-    "Reward",
-    "Dueling",
-    "NO_FUSION",
-    "NO_FUSION-reward", 
-    "NO_FUSION-dueling",
+    "gap-exp",
 ]
-
 curve_combinations = [
-    [0, 6,  5, 11],
-    [1, 7,  5, 11],
-    [4, 10, 5, 11], 
-    [2, 8,  5, 11], # appendix 
-    [3, 9,  5, 11]  # appendix
+    [0, 1, 2, 3]
 ]
 
 ylabel = [
-    "Reward-based regret " + r"$R_T^{(R)}$",   # Reward
-    "Dueling-based regret " + r"$R_T^{(D)}$",  # Dueling
     "Aggregated regret " + r"$R_T$", 
-    "Aggregated regret" + r"$R_T$",
-    "Aggregated regret" + r"$R_T$"
 ]
 
 # 用于存储所有轮次的数据
@@ -65,37 +39,26 @@ def draw_plt(all_rounds_data):
     )  # 转换为 NumPy 数组
     mean_data = np.mean(all_rounds_data, axis=1)  # 每条曲线的均值
     
-    mean_200000.append(mean_data[:, 200000])
-    
     std_data = np.std(all_rounds_data, axis=1)  # 每条曲线的标准差
 
     # 定义颜色、形状和线条样式的映射
     color_map = [
-        "green", "green", "green", "green", 
-        
-        "green", "red", 
-        
-        "purple", "purple","purple", "purple", 
-        
-        "purple", "blue"
+        "green",
+        "red",
+        "purple",
+        "blue"
     ]
     marker_map = [
-        "o", "o", "o", "o", 
-        
-        "o", "^", 
-        
-        "s", "s", "s", "s", 
-        
-        "s", "d"
+        "o",
+        "^",
+        "s",
+        "d"
     ]
     linestyle_map = [
-        "--", "--", "--", "--", 
-
-        "--", "-.",
-
-        ":", ":", ":", ":", 
-
-        ":", "-"
+        "--",
+        "-.",
+        ":",
+        "-"
     ]
 
     # 设置全局字体大小
@@ -103,6 +66,7 @@ def draw_plt(all_rounds_data):
 
     # 遍历每张图的曲线组合
     for idx, curves in enumerate(curve_combinations):
+        print(idx)
         plt.figure(figsize=(8.0, 6.0), dpi=300)
 
         for curve_idx in curves:
@@ -117,7 +81,6 @@ def draw_plt(all_rounds_data):
                 markeredgecolor=color_map[curve_idx],
                 linestyle=linestyle_map[curve_idx],
                 color=color_map[curve_idx],
-                markevery=(iterations // 10),
             )
             # 绘制标准差阴影区域
             if std_data[curve_idx].any():
@@ -129,57 +92,47 @@ def draw_plt(all_rounds_data):
                     color=color_map[curve_idx],
                 )
 
+
         # 设置科学计数法坐标轴
         ax = plt.gca()
-        ax.xaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+        # ax.xaxis.set_major_formatter(ScalarFormatter(useMathText=True))
         ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-        ax.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
+        # ax.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
         ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         plt.yscale("log")
 
         # 设置坐标轴和图例
-        plt.xticks(fontsize=18, rotation=45)
+        plt.xticks(x_data, fontsize=18, rotation=45)
         plt.yticks(fontsize=18)
-        plt.xlabel("Round " + r"$t$", fontsize=20, fontweight="bold")
+        plt.xlabel("Minimal dueling gap " + r"$\Delta_2^{(\text{D})}$", fontsize=20, fontweight="bold")
         plt.ylabel(ylabel[idx], fontsize=20, fontweight="bold")
+        # 让 curve name 显示为 2 * 2 而不是 4 * 1
         plt.legend(fontsize=18, ncol=2)
-        plt.ylim(bottom=10)
+        plt.ylim(bottom=1)
 
         # 调整布局并保存图像
         plt.tight_layout()
         if not os.path.exists(PATH):
             os.makedirs(PATH)
-        plt.savefig(os.path.join(PATH, f"{graph_names[idx]}.png"))
+        plt.savefig(os.path.join(PATH, "gap-mat.png"))
         plt.close()
 
+
 # 读取数据文件
-with open("../out.nosync/raw.txt") as f:
-    round_count = 0
+with open("../out.nosync/gap-mat.txt") as f:
     while True:
         line = f.readline()
         if not line:
             break
         elif line.startswith("#"):
-            round_count += 1
-            print(f"Processing round: {round_count}")
-
-            # 读取并解析当前轮次数据
             data = np.array(
                 [
                     list(map(float, f.readline().strip().split()[1:]))
-                    for _ in range(iterations + 1)
+                    for _ in range(iterations)
                 ]
             )
-
-            # 使用转置直接存储每条曲线数据
             for i in range(curve_num):
                 all_rounds_data[i].append(data[:, i])
 
 # 绘制图像
 draw_plt(all_rounds_data)
-
-
-print(mean_200000)
-
-
-

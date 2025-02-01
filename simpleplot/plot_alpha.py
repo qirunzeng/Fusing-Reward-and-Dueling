@@ -69,7 +69,7 @@ def draw_plt(all_rounds_data):
             np.linspace(0, 1, 6), fontsize=18
         )  # 生成 6 个点刻度，0, 0.2, ..., 1.0
         # 设置 y 轴的范围
-        plt.ylim(0, 2000)  # 这里设置 y 轴的范围为 0 到 1，可以根据需要调整
+        plt.ylim(0, 500)  # 这里设置 y 轴的范围为 0 到 1，可以根据需要调整
 
         # 设置 y 轴科学计数法
         ax = plt.gca()
