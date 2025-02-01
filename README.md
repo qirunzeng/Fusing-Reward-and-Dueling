@@ -1,7 +1,5 @@
 # Fusing Reward and Relative Feedback for Reinforcement Learning
 
-[TOC]
-
 ### Execute
 
 ```shell
@@ -18,23 +16,25 @@ or:
 sh start.sh
 ```
 
-### 生成数据
+### Data Generating
 
-`main.cpp` 中有两个 `#if`，可根据注释修改 `#if 0`, `#if 1`。
+There are multiple `#if` in `main.cpp`, which will generate different data.
 
-- 第一个 `if` 表示是否生成 regret 根据 time slot 变化的数据
-- 第二个 `if` 表示是否生成 regret 根据 $\alpha$ 变化的数据
+You should make directory `out.nosync` before implementing the code.
 
 ### Param
 
-位于 `include/environment.h` 中，可直接修改
+In `include/environment.h`
 
 ### Plot
 
 ```shell
 cd simpleplot
 
-python simpleplot.py # 画 3 幅 regret 根据 time slot 变化的图
-
-python plot_alpha.py # 画 1 幅根据 alpha 变化的图
+python -u simpleplot.py
+python -u plot_gap.py
+python -u plot-gap-mat.py
+python -u plot_alpha.py 
 ```
+
+And then the graph will be in `../fig/`, which is not in the code directory.
