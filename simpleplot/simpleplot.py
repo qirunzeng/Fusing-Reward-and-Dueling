@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
-# 配置参数
 iterations = 200000
 x_data = np.arange(iterations + 1)
-PATH = "../../fig/regret/"
+PATH = "../fig/regret/"
 curve_name = [
     "ElimNoFusion",     # 0
     "ElimNoFusion",     # 1
@@ -24,7 +23,7 @@ curve_name = [
     "RMED (Dueling)",   # 9
     
     "MEDNoFusion",      # 10 
-    "DecoFusion",      # 11 
+    "DecoFusion",       # 11 
 ]
 
 curve_num = len(curve_name)
@@ -41,35 +40,29 @@ curve_combinations = [
     [0, 6,  5, 11],
     [1, 7,  5, 11],
     [4, 10, 5, 11], 
-    [2, 8,  5, 11], # appendix 
-    [3, 9,  5, 11]  # appendix
+    [2, 8,  5, 11], 
+    [3, 9,  5, 11] 
 ]
 
 ylabel = [
-    "Reward-based regret " + r"$R_T^{(R)}$",   # Reward
-    "Dueling-based regret " + r"$R_T^{(D)}$",  # Dueling
+    "Reward-based regret " + r"$R_T^{(R)}$", 
+    "Dueling-based regret " + r"$R_T^{(D)}$",
     "Aggregated regret " + r"$R_T$", 
     "Aggregated regret" + r"$R_T$",
     "Aggregated regret" + r"$R_T$"
 ]
 
-# 用于存储所有轮次的数据
 all_rounds_data = [[] for _ in range(curve_num)]
 
-mean_200000 = []
 
 def draw_plt(all_rounds_data):
-    # 转换为 NumPy 数组，计算均值和标准差
     all_rounds_data = np.array(
         [np.array(curve) for curve in all_rounds_data]
-    )  # 转换为 NumPy 数组
-    mean_data = np.mean(all_rounds_data, axis=1)  # 每条曲线的均值
+    ) 
+    mean_data = np.mean(all_rounds_data, axis=1) 
     
-    mean_200000.append(mean_data[:, 200000])
-    
-    std_data = np.std(all_rounds_data, axis=1)  # 每条曲线的标准差
+    std_data = np.std(all_rounds_data, axis=1)  
 
-    # 定义颜色、形状和线条样式的映射
     color_map = [
         "green", "green", "green", "green", 
         
@@ -98,10 +91,8 @@ def draw_plt(all_rounds_data):
         ":", "-"
     ]
 
-    # 设置全局字体大小
     plt.rcParams.update({"font.size": 20})
 
-    # 遍历每张图的曲线组合
     for idx, curves in enumerate(curve_combinations):
         plt.figure(figsize=(8.0, 6.0), dpi=300)
 
@@ -119,7 +110,6 @@ def draw_plt(all_rounds_data):
                 color=color_map[curve_idx],
                 markevery=(iterations // 10),
             )
-            # 绘制标准差阴影区域
             if std_data[curve_idx].any():
                 plt.fill_between(
                     x_data,
@@ -129,7 +119,6 @@ def draw_plt(all_rounds_data):
                     color=color_map[curve_idx],
                 )
 
-        # 设置科学计数法坐标轴
         ax = plt.gca()
         ax.xaxis.set_major_formatter(ScalarFormatter(useMathText=True))
         ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
@@ -137,7 +126,6 @@ def draw_plt(all_rounds_data):
         ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
         plt.yscale("log")
 
-        # 设置坐标轴和图例
         plt.xticks(fontsize=18, rotation=45)
         plt.yticks(fontsize=18)
         plt.xlabel("Round " + r"$t$", fontsize=20, fontweight="bold")
@@ -145,14 +133,12 @@ def draw_plt(all_rounds_data):
         plt.legend(fontsize=18, ncol=2)
         plt.ylim(bottom=10)
 
-        # 调整布局并保存图像
         plt.tight_layout()
         if not os.path.exists(PATH):
             os.makedirs(PATH)
         plt.savefig(os.path.join(PATH, f"{graph_names[idx]}.png"))
         plt.close()
 
-# 读取数据文件
 with open("../out.nosync/raw.txt") as f:
     round_count = 0
     while True:
@@ -163,7 +149,6 @@ with open("../out.nosync/raw.txt") as f:
             round_count += 1
             print(f"Processing round: {round_count}")
 
-            # 读取并解析当前轮次数据
             data = np.array(
                 [
                     list(map(float, f.readline().strip().split()[1:]))
@@ -171,15 +156,8 @@ with open("../out.nosync/raw.txt") as f:
                 ]
             )
 
-            # 使用转置直接存储每条曲线数据
             for i in range(curve_num):
                 all_rounds_data[i].append(data[:, i])
 
-# 绘制图像
 draw_plt(all_rounds_data)
-
-
-print(mean_200000)
-
-
 
