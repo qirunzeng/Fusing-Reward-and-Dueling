@@ -18,9 +18,12 @@ sh start.sh
 
 ### Data Generating
 
-There are multiple `#if` in `main.cpp`, which will generate different data.
+There are 4 `$if` in main.cpp:
 
-You should make directory `out.nosync` before implementing the code.
+1. `#if RUN_GAP`, controls whether to run the experiment to see regrets with different gaps between the expectation, with fixed $\alpha = 0.5$ and `T = 200000`
+2. `#if RUN_GAP_MAT`, controls whether to run the experiment to see regrets with different gaps between the preference matrix, with fixed $\alpha = 0.5$ and `T = 200000`
+3. `#if RUN_WITH_T`, controls whether to run the experiment to see the regrets with different `T`, with fixed $\alpha = 0.5$
+4. `#if RUN_WITH_ALPHA`, controls whether to run the experiment to see the regrets with different $\alpha$, with fixed `T = 200000`
 
 ### Param
 
@@ -31,10 +34,11 @@ In `include/environment.h`
 ```shell
 cd simpleplot
 
-python -u simpleplot.py
-python -u plot_gap.py
-python -u plot-gap-mat.py
-python -u plot_alpha.py 
-```
+python simpleplot.py 
 
-And then the graph will be in `../fig/`, which is not in the code directory.
+python plot_alpha.py 
+
+python plot_gap.py
+
+python plot-gap-mat.py
+```
