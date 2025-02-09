@@ -3,11 +3,8 @@
 //
 
 
-// #include "algorithms.h"
 #include "decomposition.h"
 #include "elimination.h"
-// #include "DUEL.h"
-// #include "UCB.h"
 #include "environment.h"
 #include "operations.h"
 #include "RewardElim.h"
@@ -21,6 +18,14 @@ const std::string path = "../out.nosync/raw.txt";
 
 #define REGRET_DATA 12
 
+#define RUN_GAP         0
+#define RUN_GAP_MAT     0
+#define RUN_WITH_T      0
+#define RUN_WITH_ALPHA  1
+
+#define SEP ">>=====================================================================================================================<<"
+
+
 void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::regrets *alg2_regrets1, const opr::regrets *alg2_regrets2, const opr::regrets *reward_elim_r, const opr::regrets *dueling_elim_r, const opr::regrets *alg2_r05) {
     outfile << "---> results:" << std::endl;
     outfile << "# T            # ..." << std::endl;
@@ -29,7 +34,7 @@ void output_data(std::ofstream& outfile, const opr::regrets *alg1_r, const opr::
     }
     outfile << std::endl;
     for (int i = 1; i <= alg::T; ++i) {
-        outfile << std::left << std::setw(14) << i << " ";
+        outfile<<std::left <<std::setw(14) << i << " ";
         outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<reward_elim_r[i].reward_r << " "; // Elim No Fusion
         outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<dueling_elim_r[i].duel_r  << " "; // Elim No Fusion
         outfile<<std::fixed<<std::setprecision(2)<<std::left<<std::setw(8)<<reward_elim_r[i].reward_r*0.5 + reward_elim_r[i].duel_r*0.5 <<" ";//ElimFusion-Reward
@@ -63,13 +68,13 @@ void output(std::ofstream& outfile) {
     outfile << "---> alpha: " << alg::alpha << std::endl;
     outfile << "---> expectations:" << std::endl;
     for (const auto &exp : env::expectations) {
-        outfile << std::fixed << std::setprecision(2) << std::left << std::setw(4) << exp << " ";
+        outfile << std::fixed << std::setprecision(2) << std::left << std::setw(5) << exp << " ";
     }
     outfile << std::endl;
     outfile << "---> preference matrix:" << std::endl;
     for (const auto& line : env::preference_matrix) {
         for (const auto& element : line) {
-            outfile << std::fixed << std::setprecision(2) << std::left << std::setw(4) << element << " ";
+            outfile << std::fixed << std::setprecision(2) << std::left << std::setw(5) << element << " ";
         }
         outfile << std::endl;
     }
@@ -91,19 +96,20 @@ int main() {
     srand(env::seed);
     alg::delta = 1.0 / static_cast<double>(1LL * alg::T);
 
-    #if 0
+#if RUN_GAP
     const std::string path_gap = "../out.nosync/gap.txt";
     auto * gap_reward_elim_regrets = new opr::regrets[alg::T+1], * gap_dueling_elim_regrets = new opr::regrets[alg::T+1], *gap_alg1_regrets = new opr::regrets[alg::T+1], *gap_alg2_regrets0_5 = new opr::regrets[alg::T+1], *gap_alg2_r1 = new opr::regrets[alg::T+1], *gap_alg2_r2 = new opr::regrets[alg::T+1];
     std::ofstream outfile2(path_gap);
 
-    outfile2 << ">>=====================================================================================================================<<" << std::endl;
+    outfile2 << SEP << std::endl;
     outfile2 << "Average result over " << ROUND << " rounds of " << alg::K << " arms over " << alg::T << " iterations per round." << std::endl;
     auto origin_exp = env::expectations;
+    const double gaps[] = {0.06, 0.11, 0.16, 0.21};
     for (int i = 0; i < ROUND; ++i) {
         outfile2 << "# GAP" << std::endl;
         std::cout << "=====> Run = " << i+1 << std::endl;
         for (int x = 0; x < 4; ++x) {
-            const double gap = 0.06 + 0.05 * x;
+            const double gap = gaps[x];
             std::cout << gap << std::endl;
             env::expectations[0] = 0.9;
             for (int j = 1; j < alg::K; ++j) {
@@ -135,22 +141,23 @@ int main() {
     }
     env::expectations = origin_exp;
     outfile2.close();
-    #endif
+#endif
 
-    #if 0
+#if RUN_GAP_MAT
     const std::string path_gap1 = "../out.nosync/gap-mat.txt";
     auto * mat_gap_reward_elim_regrets = new opr::regrets[alg::T+1], * mat_gap_dueling_elim_regrets = new opr::regrets[alg::T+1], *mat_gap_alg1_regrets = new opr::regrets[alg::T+1], *mat_gap_alg2_regrets0_5 = new opr::regrets[alg::T+1], *mat_gap_alg2_r1 = new opr::regrets[alg::T+1], *mat_gap_alg2_r2 = new opr::regrets[alg::T+1];
     std::ofstream outfile3(path_gap1);
 
-    outfile3 << ">>=====================================================================================================================<<" << std::endl;
+    outfile3 << SEP << std::endl;
     outfile3 << "Average result over " << ROUND << " rounds of " << alg::K << " arms over " << alg::T << " iterations per round." << std::endl;
     auto origin_mat = env::preference_matrix;
+    const double mat_gaps[] = {0.03, 0.05, 0.07, 0.09, 0.11};
     for (int i = 0; i < ROUND; ++i) {
         outfile3 << "# GAP" << std::endl;
         std::cout << "=====> Run = " << i+1 << std::endl;
         for (int x = 0; x < 5; ++x) {
-            const double gap = 0.03 + 0.02 * x;
-            std::cout << gap << std::endl;
+            const double gap = mat_gaps[x];
+            std::cout << "Curr gap: " << gap << std::endl;
             for (int l = 0; l < alg::K; ++l) {
                 for (int j = l; j < alg::K; ++j) {
                     if (l == j) {
@@ -191,10 +198,10 @@ int main() {
     }
     env::preference_matrix = origin_mat;
     outfile3.close();
-    #endif
+#endif
 
 
-    # if 1 // 根据 T 变化
+# if RUN_WITH_T
     auto * reward_elim_regrets = new opr::regrets[alg::T+1], * dueling_elim_regrets = new opr::regrets[alg::T+1], *alg1_regrets = new opr::regrets[alg::T+1], *alg2_regrets1 = new opr::regrets[alg::T+1], *alg2_regrets2 = new opr::regrets[alg::T+1], *alg2_regrets0_5 = new opr::regrets[alg::T+1];
     std::ofstream outfile(path);
 
@@ -226,13 +233,13 @@ int main() {
     }
     outfile.close();
     std::cout << "Data written to file: " << path << std::endl;
-    #endif
+#endif
 
-    #if 0 // 根据 alpha 变化
+#if RUN_WITH_ALPHA
     const std::string path_alpha = "../out.nosync/alpha.txt";
     std::ofstream outfile_alpha(path_alpha);
 
-    outfile_alpha << ">>=====================================================================================================================<<" << std::endl;
+    outfile_alpha << SEP << std::endl;
     outfile_alpha << "Average result over " << ROUND << " rounds of " << alg::K << " arms over " << alg::T << " iterations per round." << std::endl;
     outfile_alpha << "---> seed:  " << env::seed  << std::endl;
     outfile_alpha << "---> delta: " << alg::delta << std::endl;
@@ -244,16 +251,16 @@ int main() {
     outfile_alpha << "---> preference matrix:" << std::endl;
     for (const auto &line : env::preference_matrix) {
         for (const auto &element : line) {
-            outfile_alpha << std::fixed << std::setprecision(2) << std::left << std::setw(4) << element;
+            outfile_alpha << std::fixed << std::setprecision(2) << std::left << std::setw(5) << element;
         }
         outfile_alpha << std::endl;
     }
 
-    constexpr double gap = 0.2;
-    constexpr double start = 0.1;
-    constexpr int tot = 4;
+    constexpr double gap = 0.02;
+    constexpr double start = 0.0;
+    constexpr int tot = 50;
 
-    double duel_regrets[tot+1][ROUND]; // range from 0.00 to 1.00, regrets[i] 表示 alpha = i * 0.02 的 regret
+    double duel_regrets[tot+1][ROUND];  // range from 0.00 to 1.00, step 0.02
     double reward_regrets[tot+1][ROUND];
     for (int i = 0; i <= tot; i++) {
         for (int j = 0; j < ROUND; ++j) {
@@ -267,6 +274,7 @@ int main() {
         }
         std::cout << alg::alpha << std::endl;
     }
+
     for (int j = 0; j < ROUND; ++j) {
         outfile_alpha << "alpha  #reward regrets #duel regrets #regrets" << std::endl;
         for (int i = 0; i <= tot; i++) {
@@ -278,6 +286,6 @@ int main() {
     outfile_alpha << std::endl;
     outfile_alpha.close();
     std::cout << "Data written to file: " << path_alpha << std::endl;
-    #endif
+#endif
     return 0;
 }
